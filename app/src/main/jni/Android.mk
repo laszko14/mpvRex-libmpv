@@ -76,8 +76,9 @@ LOCAL_SRC_FILES := \
 	property.cpp \
 	event.cpp \
 	node.cpp \
-	thumbnail.cpp
-LOCAL_LDLIBS    := -llog -lGLESv3 -lEGL -latomic
+	thumbnail.cpp \
+	clipper.cpp
+LOCAL_LDLIBS    := -llog -lGLESv3 -lEGL -latomic -lmediandk
 LOCAL_SHARED_LIBRARIES := swscale avcodec avformat avutil mpv
 
 include $(BUILD_SHARED_LIBRARY)

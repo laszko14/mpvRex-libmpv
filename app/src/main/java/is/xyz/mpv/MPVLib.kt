@@ -40,6 +40,8 @@ object MPVLib {
     external fun setThumbnailJavaVM(appctx: Context)
     external fun clearThumbnailCache()
 
+    external fun cutClipNative(inputPath: String, outputPath: String, startSec: Double, endSec: Double, mode: Int = 0): String?
+
     external fun getPropertyInt(property: String): Int?
     external fun setPropertyInt(property: String, value: Int)
     external fun getPropertyDouble(property: String): Double?

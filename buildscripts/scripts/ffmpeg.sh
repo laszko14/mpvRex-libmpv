@@ -37,10 +37,10 @@ args=(
 	# - muxers, encoders: mpv-android does not have any way to use these
 	# - devices: no practical use on Android
 	--disable-{muxers,encoders,devices}
-	# useful to taking screenshots
+	# useful for taking screenshots
 	--enable-encoder=mjpeg,png
-	# useful for the `dump-cache` command
-	--enable-muxer=mov,matroska,mpegts
+	# useful for clipping, remuxing, and dump-cache
+	--enable-muxer=mov,matroska,webm,mpegts
 )
 ../configure "${args[@]}"
 
