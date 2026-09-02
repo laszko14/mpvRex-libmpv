@@ -79,6 +79,6 @@ LOCAL_SRC_FILES := \
 	thumbnail.cpp \
 	clipper.cpp
 LOCAL_LDLIBS    := -llog -lGLESv3 -lEGL -latomic -lmediandk
-LOCAL_SHARED_LIBRARIES := swscale avcodec avformat avutil mpv
+LOCAL_SHARED_LIBRARIES := swresample swscale avcodec avformat avutil mpv
 
 include $(BUILD_SHARED_LIBRARY)

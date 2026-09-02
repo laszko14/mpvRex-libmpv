@@ -40,7 +40,7 @@ args=(
 	# useful for taking screenshots
 	--enable-encoder=mjpeg,png
 	# useful for clipping, remuxing, and dump-cache
-	--enable-muxer=mov,matroska,webm,mpegts
+	--enable-muxer=mov,matroska,webm,mpegts,mp3,ogg,opus,flac,wav,adts,latm
 )
 ../configure "${args[@]}"
 
