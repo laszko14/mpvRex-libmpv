@@ -35,9 +35,9 @@ jobs:
           test -s unpacked/classes.jar
           # Never accidentally distribute mismatched or additional ABIs.
           test "$(find unpacked/jni -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 1
-          readelf -W --dyn-syms unpacked/jni/arm64-v8a/libmpv.so | grep -Eq 'GLOBAL.*mpv_rex_set_pcm_sink'
+          readelf -W --dyn-syms unpacked/jni/arm64-v8a/libmpv.so | grep -E 'GLOBAL.*mpv_rex_set_pcm_sink' >/dev/null
           for function in vadTapStart vadTapStop vadTapPoll; do
-            readelf -W --dyn-syms unpacked/jni/arm64-v8a/libplayer.so | grep -q "Java_is_xyz_mpv_MPVLib_${function}"
+            readelf -W --dyn-syms unpacked/jni/arm64-v8a/libplayer.so | grep "Java_is_xyz_mpv_MPVLib_${function}" >/dev/null
           done
           mv dist/app-release.aar dist/mpvRex-libmpv-v47-arm64-r1.aar
           (cd dist && sha256sum mpvRex-libmpv-v47-arm64-r1.aar > mpvRex-libmpv-v47-arm64-r1.aar.sha256)
