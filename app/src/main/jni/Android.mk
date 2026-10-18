@@ -77,7 +77,8 @@ LOCAL_SRC_FILES := \
 	event.cpp \
 	node.cpp \
 	thumbnail.cpp \
-	clipper.cpp
+	clipper.cpp \
+	vad_tap.cpp
 LOCAL_LDLIBS    := -llog -lGLESv3 -lEGL -latomic -lmediandk
 LOCAL_SHARED_LIBRARIES := swresample swscale avcodec avformat avutil mpv
 
