@@ -26,6 +26,19 @@ END
 
 unset CC CXX # meson wants these unset
 
+# Fail the build if the fork's PCM tap no longer matches pinned mpv.
+# Never silently continue with a libmpv lacking the promised callback.
+if [ -f "$DIR/patches/mpv-vad-pcm-tap.patch" ]; then
+    if patch -p1 --fuzz=0 --forward --dry-run < "$DIR/patches/mpv-vad-pcm-tap.patch" >/dev/null 2>&1; then
+        patch -p1 --fuzz=0 --forward < "$DIR/patches/mpv-vad-pcm-tap.patch"
+    elif patch -p1 --fuzz=0 --reverse --dry-run < "$DIR/patches/mpv-vad-pcm-tap.patch" >/dev/null 2>&1; then
+        echo "PCM tap already applied."
+    else
+        echo "ERROR: mpv PCM tap patch does not match pinned source." >&2
+        exit 1
+    fi
+fi
+
 if [ -f "$DIR/patches/mpv-shaders.patch" ]; then
 	patch -p1 -N --dry-run < "$DIR/patches/mpv-shaders.patch" >/dev/null 2>&1 && patch -p1 < "$DIR/patches/mpv-shaders.patch" || true
 fi
