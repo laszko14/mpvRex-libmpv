@@ -86,6 +86,8 @@ jni_func(void, destroy) {
         return;
     }
 
+    rex_vad_tap_stop();
+
     // poke event thread and wait for it to exit
     g_event_thread_request_exit = true;
     mpv_wakeup(g_mpv);
