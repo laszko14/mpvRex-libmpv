@@ -39,8 +39,8 @@ jobs:
           for function in vadTapStart vadTapStop vadTapPoll; do
             readelf -W --dyn-syms unpacked/jni/arm64-v8a/libplayer.so | grep "Java_is_xyz_mpv_MPVLib_${function}" >/dev/null
           done
-          mv dist/app-release.aar dist/mpvRex-libmpv-v47-arm64-r1.aar
-          (cd dist && sha256sum mpvRex-libmpv-v47-arm64-r1.aar > mpvRex-libmpv-v47-arm64-r1.aar.sha256)
+          mv dist/app-release.aar dist/mpvRex-libmpv-native-v47-arm64-r1.aar
+          (cd dist && sha256sum mpvRex-libmpv-native-v47-arm64-r1.aar > mpvRex-libmpv-native-v47-arm64-r1.aar.sha256)
           cat dist/*.sha256
 
       - name: Publish immutable release asset for downstream Gradle
@@ -56,8 +56,8 @@ jobs:
             exit 0
           fi
           gh release create "$tag" \
-            dist/mpvRex-libmpv-v47-arm64-r1.aar \
-            dist/mpvRex-libmpv-v47-arm64-r1.aar.sha256 \
+            dist/mpvRex-libmpv-native-v47-arm64-r1.aar \
+            dist/mpvRex-libmpv-native-v47-arm64-r1.aar.sha256 \
             --repo "$GITHUB_REPOSITORY" \
             --target "$SOURCE_SHA" \
             --title "MPV Alpha Auto Audio v47 — native ARM64 r1" \
