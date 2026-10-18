@@ -1,0 +1,64 @@
+name: Publish verified MPV Alpha ARM64 library
+
+on:
+  workflow_run:
+    workflows: ["build"]
+    types: [completed]
+    branches: [master]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    # Only a successful native build of OUR default branch may publish a release.
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == 'laszko14/mpvRex-libmpv' && github.event.workflow_run.head_branch == 'master' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download matched ARM64 artifact from successful workflow
+        uses: actions/download-artifact@v4
+        with:
+          name: mpv-lib-arm64
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist
+
+      - name: Verify ABI and exported native PCM tap before publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/app-release.aar
+          unzip -q dist/app-release.aar -d unpacked
+          test -s unpacked/jni/arm64-v8a/libmpv.so
+          test -s unpacked/jni/arm64-v8a/libplayer.so
+          test -s unpacked/classes.jar
+          # Never accidentally distribute mismatched or additional ABIs.
+          test "$(find unpacked/jni -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 1
+          readelf -W --dyn-syms unpacked/jni/arm64-v8a/libmpv.so | grep -Eq 'GLOBAL.*mpv_rex_set_pcm_sink'
+          for function in vadTapStart vadTapStop vadTapPoll; do
+            readelf -W --dyn-syms unpacked/jni/arm64-v8a/libplayer.so | grep -q "Java_is_xyz_mpv_MPVLib_${function}"
+          done
+          mv dist/app-release.aar dist/mpvRex-libmpv-v47-arm64-r1.aar
+          (cd dist && sha256sum mpvRex-libmpv-v47-arm64-r1.aar > mpvRex-libmpv-v47-arm64-r1.aar.sha256)
+          cat dist/*.sha256
+
+      - name: Publish immutable release asset for downstream Gradle
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          tag="native-v47-arm64-r1"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $tag already exists. Never overwrite it."
+            exit 0
+          fi
+          gh release create "$tag" \
+            dist/mpvRex-libmpv-v47-arm64-r1.aar \
+            dist/mpvRex-libmpv-v47-arm64-r1.aar.sha256 \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$SOURCE_SHA" \
+            --title "MPV Alpha Auto Audio v47 — native ARM64 r1" \
+            --notes "ARM64-only native libmpv/libplayer PCM tap for diagnostic WebRTC VAD. Automatically verified in GitHub Actions. This is NOT an APK and not proof of working streaming speech detection."
