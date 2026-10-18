@@ -38,6 +38,8 @@ dep_mpv_android=(mpv)
 
 # pinned ffmpeg revision
 v_ci_ffmpeg=n8.1.2
+# Pin mpv: the VAD PCM hook patch is reviewed against this exact source.
+v_rex_mpv_sha=6a262d11f63733d37e3ee6d5fafcb1be1ef83952
 
 # filename used to uniquely identify a build prefix
 ci_tarball="prefix-ndk-${v_ndk}-lua-${v_lua}-unibreak-${v_unibreak}-harfbuzz-${v_harfbuzz}-fribidi-${v_fribidi}-freetype-${v_freetype}-mbedtls-${v_mbedtls}-ffmpeg-${v_ci_ffmpeg}.tgz"
