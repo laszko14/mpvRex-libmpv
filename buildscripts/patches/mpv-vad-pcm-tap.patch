@@ -1,0 +1,99 @@
+--- a/player/audio.c
++++ b/player/audio.c
+@@ -15,8 +15,9 @@
+  * License along with mpv.  If not, see <http://www.gnu.org/licenses/>.
+  */
+ 
+-#include <stddef.h>
+-#include <stdbool.h>
++#include <stddef.h>
++#include <stdbool.h>
++#include <stdatomic.h>
+ #include <inttypes.h>
+ #include <limits.h>
+ #include <math.h>
+@@ -30,8 +31,9 @@
+ #include "common/common.h"
+ #include "osdep/timer.h"
+ 
+-#include "audio/format.h"
+-#include "audio/out/ao.h"
++#include "audio/format.h"
++#include "audio/aframe.h"
++#include "audio/out/ao.h"
+ #include "demux/demux.h"
+ #include "filters/f_async_queue.h"
+ #include "filters/f_decoder_wrapper.h"
+@@ -46,7 +48,50 @@
+     AD_WAIT = -4,
+ };
+ 
+-static void ao_process(struct mp_filter *f);
++static void ao_process(struct mp_filter *f);
++
++// MPV Alpha: a read-only hook for ORIGINAL decoded audio. The callback pointer
++// lives in the Android libplayer bridge, which owns the bounded non-blocking
++// queue. Called before any user af, tempo or output conversion.
++typedef void (*rex_pcm_tap_fn)(const uint8_t *const *planes, int format,
++                               int channels, int rate, int samples, double pts);
++static _Atomic(rex_pcm_tap_fn) rex_pcm_sink;
++
++__attribute__((visibility("default")))
++void mpv_rex_set_pcm_sink(rex_pcm_tap_fn callback)
++{
++    atomic_store_explicit(&rex_pcm_sink, callback, memory_order_release);
++}
++
++static void rex_pcm_tap_process(struct mp_filter *f)
++{
++    if (!mp_pin_can_transfer_data(f->ppins[1], f->ppins[0]))
++        return;
++    struct mp_frame frame = mp_pin_out_read(f->ppins[0]);
++    if (frame.type == MP_FRAME_AUDIO) {
++        rex_pcm_tap_fn sink = atomic_load_explicit(&rex_pcm_sink, memory_order_acquire);
++        if (sink) {
++            struct mp_aframe *audio = frame.data;
++            int format = mp_aframe_get_format(audio);
++            int channels = mp_aframe_get_channels(audio);
++            int rate = mp_aframe_get_rate(audio);
++            int count = mp_aframe_get_size(audio);
++            if (af_fmt_is_pcm(format) && channels > 0 && channels <= 8 &&
++                rate >= 8000 && rate <= 192000 && count > 0 && count <= 16384) {
++                uint8_t **planes = mp_aframe_get_data_ro(audio);
++                if (planes && planes[0])
++                    sink((const uint8_t *const *)planes, format,
++                         channels, rate, count, mp_aframe_get_pts(audio));
++            }
++        }
++    }
++    mp_pin_in_write(f->ppins[1], frame); // original frame, unchanged
++}
++
++static const struct mp_filter_info rex_pcm_tap_filter = {
++    .name = "rex-pre-af-vad-pcm",
++    .process = rex_pcm_tap_process,
++};
+ 
+ static void update_speed_filters(struct MPContext *mpctx)
+ {
+@@ -591,8 +636,18 @@
+         track->ao_c = ao_c;
+         if (!init_audio_decoder(mpctx, track))
+             goto init_error;
+-        ao_c->dec_src = track->dec->f->pins[0];
+-        mp_pin_connect(ao_c->filter->f->pins[0], ao_c->dec_src);
++        ao_c->dec_src = track->dec->f->pins[0];
++        // Child of the output chain: freed automatically when audio stops.
++        // A tap allocation failure must NEVER prevent playback.
++        struct mp_filter *tap = mp_filter_create(ao_c->filter->f, &rex_pcm_tap_filter);
++        if (tap) {
++            mp_filter_add_pin(tap, MP_PIN_IN, "in");
++            mp_filter_add_pin(tap, MP_PIN_OUT, "out");
++            mp_pin_connect(ao_c->filter->f->pins[0], tap->pins[1]);
++            mp_pin_connect(tap->pins[0], ao_c->dec_src);
++        } else {
++            mp_pin_connect(ao_c->filter->f->pins[0], ao_c->dec_src);
++        }
+     }
+ 
+     reset_audio_state(mpctx);
