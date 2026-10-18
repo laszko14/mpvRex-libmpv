@@ -3,6 +3,7 @@
 // Do not do Java calls, disk I/O, network or blocking waits from mpv audio.
 #include <jni.h>
 #include <stdint.h>
+#include <mpv/client.h>
 #include <algorithm>
 #include <atomic>
 #include <cmath>
