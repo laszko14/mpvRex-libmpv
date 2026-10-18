@@ -26,6 +26,22 @@ object MPVLib {
     external fun create(appctx: Context)
     external fun init()
     external fun destroy()
+
+    /** Read-only decoded PCM, before the user audio filters and playback-speed
+     * adjustment. Explicitly start/stop per Auto Audio analysis; never persist
+     * PCM or call this from the real-time audio thread. Data is fail-closed:
+     * droppedChunks > 0 invalidates the current scan.
+     */
+    data class VadPcmChunk(
+        val samples: ShortArray,
+        val sampleRate: Int,
+        val pts: Double,
+        val droppedChunks: Int,
+    )
+
+    external fun vadTapStart()
+    external fun vadTapStop()
+    external fun vadTapPoll(): VadPcmChunk?
     external fun attachSurface(surface: Surface)
     external fun detachSurface()
 

@@ -35,6 +35,9 @@ std::atomic<bool> g_event_thread_request_exit(false);
 
 static pthread_t event_thread_id;
 
+// Stops the non-blocking PCM bridge before the mpv native object is destroyed.
+void rex_vad_tap_stop();
+
 static void prepare_environment(JNIEnv *env, jobject appctx) {
     setlocale(LC_NUMERIC, "C");
 
@@ -82,6 +85,8 @@ jni_func(void, destroy) {
         ALOGV("mpv destroy called but it's already destroyed");
         return;
     }
+
+    rex_vad_tap_stop();
 
     // poke event thread and wait for it to exit
     g_event_thread_request_exit = true;

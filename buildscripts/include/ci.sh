@@ -32,7 +32,7 @@ build_prefix() {
 	IN_CI=1 ./include/download-deps.sh
 
 	msg "Compiling"
-	for arch in armv7l arm64 x86 x86_64; do
+	for arch in arm64; do # v47: only supported ARM64 device ABI
 		./buildall.sh --arch $arch --only-deps mpv
 	done
 
@@ -62,7 +62,7 @@ elif [ "$1" = "install" ]; then
 
 	msg "Fetching mpv"
 	mkdir -p deps/mpv
-	$WGET https://github.com/mpv-player/mpv/archive/master.tar.gz -O master.tgz
+	$WGET "https://github.com/mpv-player/mpv/archive/${v_rex_mpv_sha}.tar.gz" -O master.tgz
 	tar -xzf master.tgz -C deps/mpv --strip-components=1
 	rm master.tgz
 

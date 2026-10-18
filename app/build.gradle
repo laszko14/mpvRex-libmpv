@@ -24,7 +24,7 @@ afterEvaluate {
         publications {
             release(MavenPublication) {
                 from components.release
-                groupId = 'com.github.sfsakhawat999'
+                groupId = 'com.github.laszko14'
                 artifactId = 'mpvRex-libmpv'
                 version = System.getenv("VERSION_TAG") ?: 'v0.0.3'
             }
