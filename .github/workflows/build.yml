@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        architecture: [ armv7l, arm64, x86, x86_64 ]
+        architecture: [ arm64 ]  # MPV Alpha v47: only supported device ABI for now
     permissions:
       contents: write
 
